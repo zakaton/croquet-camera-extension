@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+        <script src="croquet2.js"></script>
+        <script src="model.js"></script>
+    </head>
+
+    <body>
+        <input id="fileInput" type="file">
+    </body>
+
+    <script>
+        function uploadElement (elem, opts, cb) {
+            if (typeof opts === 'function') {
+                cb = opts;
+                opts = {};
+            }
+            if (typeof opts === 'string') opts = { type: opts };
+            
+            elem.addEventListener('change', function (ev) {
+                if (elem.files.length === 0) return cb(null, []);
+                
+                var reader = new FileReader;
+                var index = 0;
+                var results = [];
+                
+                reader.addEventListener('load', function (e) {
+                    results.push({
+                        file: elem.files[index],
+                        target: e.target
+                    });
+                    index ++;
+                    if (index === elem.files.length) cb(null, results)
+                    else read(index)
+                });
+                read(index);
+                
+                function read (index) {
+                    var file = elem.files[index];
+                    if (opts.type === 'text') {
+                        reader.readAsText(file);
+                    }
+                    else if (opts.type === 'url') {
+                        reader.readAsDataURL(file);
+                    }
+                    else reader.readAsArrayBuffer(file);
+                }
+            });
+        };
+    </script>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        class View extends Croquet.View {
+            constructor(model) {
+                super(model);
+                this.model = model;
+                window.view = this;
+
+                this.client = new WebTorrent();
+
+                if(false) {
+                    uploadElement(fileInput, (error, files) => {
+                        this.client.seed(files, torrent => {
+                            files = files.map(file => file.file);
+                            const {magnetURI} = torrent;
+                            console.log(`seeding ${magnetURI}`);
+                            this.publish(this.sessionId, "send-torrent", {
+                                timestamp : Date.now(),
+                                magnetURI
+                            });
+                        });
+                    });
+                }
+                else {
+                    fileInput.addEventListener("change", event => {
+                        const {files} = fileInput;
+                        
+                        this.client.seed(files, torrent => {
+                            const {magnetURI} = torrent;
+                            console.log(`seeding ${magnetURI}`);
+                            this.publish(this.sessionId, "send-torrent", {
+                                timestamp : Date.now(),
+                                magnetURI
+                            });
+                        });
+                    });
+                }
+            }
+        }
+
+        Croquet.App.root = false;
+        Croquet.startSession("croquet-camera", Model, View);
+    </script>
+</html>

@@ -1,0 +1,18 @@
+{
+    "name" : "Croquet Camera Extension",
+    "version" : "1.0",
+    "manifest_version" : 2,
+    "description" : "send media and files to the browser via WebTorrent",
+
+    "browser_action" : {
+        "default_popup" : "popup.html",
+        "default_icon" : "icon.png"
+    },
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+       "128": "icon.png"
+    }
+}
